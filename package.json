@@ -1,0 +1,22 @@
+{
+  "name": "signalk-stainless-lobster-fridge",
+  "version": "1.0.0",
+  "description": "SignalK node server plugin that reads data from a Stainless Lobster Fridge Optimiztier via USB",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "signalk-node-server-plugin"
+  ],
+  "author": "scott@scottbender.net",
+  "license": "ISC",
+  "dependencies": {
+    "debug": "^2.2.0",
+    "serialport": "^6.0.0"
+  },
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/sbender9/signalk-n2kais-to-nmea0183"
+  }
+}
