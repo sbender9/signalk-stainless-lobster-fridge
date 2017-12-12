@@ -5,6 +5,8 @@ To install, go to the node server App Store or run `npm install signalk-stainles
 
 Then go to the Plugin Confgiuration in node server, enable it and enter the USB device path for your optimizer.
 
+![screenshot](screenshot.jpeg)
+
 Example SignalK Full Tree:
 
 ```
