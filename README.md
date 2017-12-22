@@ -3,9 +3,9 @@ SignalK node server plugin that reads data from a Stainless Lobster Fridge Optim
 
 To install, go to the node server App Store or run `npm install signalk-stainless-lobster-fridge`.
 
-Then go to the Plugin Confgiuration in node server, enable it and enter the USB device path for your optimizer.
+Then go to the Plugin Configuration in node server, enable it and enter the USB device path for your optimizer.
 
-![screenshot](screenshot.jpeg)
+<img src="screenshot.jpeg" alt="screenshot" width="500" height="1083">
 
 Example SignalK Full Tree:
 
