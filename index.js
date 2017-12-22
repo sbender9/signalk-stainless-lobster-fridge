@@ -17,8 +17,9 @@
 const PLUGIN_ID = 'signalk-stainless-lobster-fridge';
 const debug = require('debug')(PLUGIN_ID)
 const SerialPort = require('serialport')
+const _ = require("lodash")
 
-const keyPrefix = 'electrical.refrigeration.1.'
+const keyPrefix = 'environment.inside.refrigerator.'
 
 module.exports = function(app) {
   var plugin = {
@@ -76,34 +77,46 @@ module.exports = function(app) {
       var parts = data.substring(7).split(',')
       var deltas = []
       
-      for ( var i = 0; i < mappings.length; i++ )
-      {
-        var mapping = mappings[i]
+      for ( var i = 0; i < fridgeMappings.length; i++ ) {
+        var mappings = fridgeMappings[i]
 
-        if ( mapping.ignore )
-          continue
+        if ( !_.isArray(mappings) )
+          mappings = [mappings]
 
-        var theValue = parts[i]
+        mappings.forEach(mapping => {
+          if ( mapping.ignore )
+            return
 
-        if ( theValue == 'nan' ) {
-          theValue = null;
-        } else {
-          theValue = mapping.conversion(theValue, parts)
-        }
+          var theValue = parts[i]
 
-        deltas.push({
-          updates: [
-            {
-              "$source": "stainless",
-              values: [
-                {
-                  path: mapping.path,
-                  value: theValue
-                }
-              ],
-              timestamp: (new Date()).toISOString()
+          if ( theValue == 'nan' ) {
+            theValue = null;
+          } else {
+            theValue = mapping.conversion(theValue, parts)
+          }
+          
+          var paths = mapping.path
+          if ( !_.isArray(paths) ) {
+            paths = [ paths ]
+          }
+          
+          var delta = {
+            updates: [
+              {
+                "$source": "stainless",
+                timestamp: (new Date()).toISOString()
+              }
+            ]
+          };
+               
+          delta.updates[0].values = paths.map(path => {
+            return {
+              path: path,
+              value: theValue
             }
-          ]
+          });
+
+          deltas.push(delta)
         });
       }
       debug(`deltas: ${JSON.stringify(deltas)}`)
@@ -121,42 +134,41 @@ module.exports = function(app) {
     }
   }
 
-  const mappings = [
-    {
-      path: keyPrefix + 'compressorStatus',
-      conversion: (val) => {
-        return {
-          0: 'not running',
-          1: 'running at min RPM',
-          2: 'running at max RPM'
-        }[Number(val)] || 'unknown';
-      }
-    },
+  const fridgeMappings = [
+    [
+      {
+        path: keyPrefix + 'compressorStatusNumber',
+        conversion: (val) => {
+          return _.isUndefined(val) ? null : Number(val)
+        }
+      },
+      {
+        path: keyPrefix + 'compressorStatus',
+        conversion: (val) => {
+          return {
+            0: 'off',
+            1: 'min',
+            2: 'max'
+          }[Number(val)] || 'unknown';
+        }
+      },
+    ],
     {
       path: keyPrefix + 'defrostStatus',
       conversion: (val) => {
-        return {
-          0: 'not defrosting',
-          1: 'defrosting'
-        }[Number(val)] || 'unknown'
+        return _.isUndefined(val) ? null : Number(val);
       }
     },
     {
       path: keyPrefix + 'boxFan',
       conversion: (val) => {
-        return {
-          0: "not running",
-          1: "running"
-        }[Number(val)] || 'unknown'
+        return _.isUndefined(val) ? null : Number(val);
       }
     },
     {
       path: keyPrefix + 'compressorFan',
       conversion: (val) => {
-        return {
-          0: 'not running',
-          1: 'running'
-        }[Number(val)] || 'unknown';
+        return _.isUndefined(val) ? null : Number(val);
       }
     },
     {
@@ -168,7 +180,7 @@ module.exports = function(app) {
       conversion: convTemperature
     },
     {
-      path: keyPrefix + 'humidity',
+      path: keyPrefix + 'relativeHumidity',
       conversion: (val) => { return Number(val) / 100 }
     },
     {
