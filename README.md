@@ -10,59 +10,73 @@ Then go to the Plugin Configuration in node server, enable it and enter the USB 
 Example SignalK Full Tree:
 
 ```
-"electrical" : {
-      "refrigeration" : {
-         "1" : {
-            "voltage" : {
-               "timestamp" : "2017-12-12T04:15:27.060Z",
-               "$source" : "stainless",
-               "value" : 5
-            },
-            "current" : {
-               "value" : 0.02,
-               "$source" : "stainless",
-               "timestamp" : "2017-12-12T04:15:27.060Z"
-            },
-            "temperature" : {
-               "value" : null,
-               "timestamp" : "2017-12-12T04:15:27.059Z",
-               "$source" : "stainless"
-            },
-            "controllerTemperature" : {
-               "timestamp" : "2017-12-12T04:15:27.059Z",
-               "$source" : "stainless",
-               "value" : 290.15
-            },
-            "compressorFan" : {
-               "timestamp" : "2017-12-12T04:15:27.059Z",
-               "$source" : "stainless",
-               "value" : "not running"
-            },
-            "humidity" : {
-               "$source" : "stainless",
-               "timestamp" : "2017-12-12T04:15:27.060Z",
-               "value" : null
-            },
-            "boxFan" : {
-               "timestamp" : "2017-12-12T04:15:27.058Z",
-               "$source" : "stainless",
-               "value" : "not running"
-            },
-            "controllerHumidity" : {
-               "timestamp" : "2017-12-12T04:15:27.060Z",
-               "$source" : "stainless",
-               "value" : 0.26
-            "defrostStatus" : {
-               "value" : "not defrosting",
-               "timestamp" : "2017-12-12T04:15:27.058Z",
-               "$source" : "stainless"
-            },
-            "compressorStatus" : {
-               "value" : "not running",
-               "timestamp" : "2017-12-12T04:15:27.057Z",
-               "$source" : "stainless"
-            }
-         }
+"environment" {
+  "inside": {
+    "refrigerator" : {
+      "boxFan" : {
+        "$source" : "stainless",
+        "timestamp" : "2017-12-23T02:10:07.047Z",
+        "value" : 0
+      },
+      "current" : {
+        "$source" : "stainless",
+        "value" : 0.02,
+        "timestamp" : "2017-12-23T02:10:07.047Z"
+      },
+      "compressorStatus" : {
+        "$source" : "stainless",
+        "value" : "off",
+        "timestamp" : "2017-12-23T02:10:07.046Z"
+      },
+      "relativeHumidity" : {
+        "value" : 0.688,
+        "timestamp" : "2017-12-23T02:10:07.047Z",
+        "meta" : {
+          "units" : "ratio",
+          "description" : "Relative humidity in zone"
+        },
+        "$source" : "stainless"
+      },
+      "temperature" : {
+        "timestamp" : "2017-12-23T02:10:07.047Z",
+        "value" : 278.55,
+        "$source" : "stainless",
+        "meta" : {
+          "description" : "Temperature",
+          "units" : "K"
+        }
+      },
+      "controllerTemperature" : {
+        "timestamp" : "2017-12-23T02:10:07.047Z",
+        "value" : 290.15,
+        "$source" : "stainless"
+      },
+      "compressorStatusNumber" : {
+        "value" : 0,
+        "timestamp" : "2017-12-23T02:10:07.046Z",
+        "$source" : "stainless"
+      },
+      "voltage" : {
+        "value" : 13.6,
+        "timestamp" : "2017-12-23T02:10:07.047Z",
+        "$source" : "stainless"
+      },
+      "compressorFan" : {
+        "$source" : "stainless",
+        "timestamp" : "2017-12-23T02:10:07.047Z",
+        "value" : 0
+      },
+      "controllerHumidity" : {
+        "$source" : "stainless",
+        "value" : 0.28,
+        "timestamp" : "2017-12-23T02:10:07.047Z"
+      },
+      "defrostStatus" : {
+        "$source" : "stainless",
+        "timestamp" : "2017-12-23T02:10:07.046Z",
+        "value" : 0
       }
-   }
+    }
+  }
+}
 ```
