@@ -166,7 +166,7 @@ module.exports = function(app) {
       }
     },
     {
-      path: keyPrefix + 'compressorFan',
+      path: keyPrefix + 'compressorRoomFan',
       conversion: (val) => {
         return _.isUndefined(val) ? null : Number(val);
       }
