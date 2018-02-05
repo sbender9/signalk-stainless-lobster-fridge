@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Teppo Kurki <teppo.kurki@ıki.fi>
+ * Copyright 2017 Scott Bender <scott@scottbender.net>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 
 const PLUGIN_ID = 'signalk-stainless-lobster-fridge';
-const debug = require('debug')(PLUGIN_ID)
 const SerialPort = require('serialport')
 const _ = require("lodash")
 
@@ -59,10 +58,10 @@ module.exports = function(app) {
     
     
     plugin.serial.on('error', function (err) {
-      debug(`error: ${err}`)
+      app.error(err.toString())
     })
     plugin.serial.on('close', function() {
-      debug("close")
+      app.debug("close")
     })
   }
   
@@ -70,7 +69,7 @@ module.exports = function(app) {
   }
 
   function parseData(data) {
-    debug('Data:', data);
+    app.debug('Data:', data);
     
     //Output: 0,0,0,0,nan,66.20,nan,24.00,5.00,F,0.02
     if ( data.startsWith("Output: ") ) {
@@ -119,7 +118,7 @@ module.exports = function(app) {
           deltas.push(delta)
         });
       }
-      debug(`deltas: ${JSON.stringify(deltas)}`)
+      app.debug(`deltas: ${JSON.stringify(deltas)}`)
       deltas.forEach(delta => {
         app.handleMessage(PLUGIN_ID, delta)
       })
