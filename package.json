@@ -1,6 +1,6 @@
 {
   "name": "signalk-stainless-lobster-fridge",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "SignalK node server plugin that reads data from a Stainless Lobster Fridge Optimiztier via USB",
   "main": "index.js",
   "scripts": {
