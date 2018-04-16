@@ -18,12 +18,13 @@ const PLUGIN_ID = 'signalk-stainless-lobster-fridge';
 const SerialPort = require('serialport')
 const _ = require("lodash")
 
-const keyPrefix = 'environment.inside.refrigerator.'
+const keyPrefix = 'environment.'
 
 module.exports = function(app) {
   var plugin = {
   };
   var tempUnits;
+  var statusMessage
 
   plugin.id = PLUGIN_ID
   plugin.name = "Stainless Lobster Fridge Optimizer"
@@ -32,43 +33,80 @@ module.exports = function(app) {
   plugin.schema = {
     type: "object",
     properties: {
-      device: {
-        type: "string",
-        title: "USB Device Name",
-        default: "/dev/ttyUSB0"
+      devices: {
+        type: 'array',
+        title: 'Devices',
+        items: {
+          type: 'object',
+          properties: {
+            usbDevice: {
+              type: "string",
+              title: "USB Device Name",
+              default: "/dev/ttyUSB0"
+            },
+            key: {
+              type: "string",
+              title: "Signal K Key",
+              description: "This is used to build the path in Signal K. It will be appended to 'environment'",
+              default: "inside.refrigerator"
+            }
+          }
+        }
       }
     }
   }
   
   plugin.start = function(options) {
+    let devices
+    if ( !options.devices && options.device ) {
+      devices = [ { key: 'inside.refrigerator', usbDevice: options.device } ]
+    } else {
+      devices = options.devices
+    }
 
-    plugin.serial = new SerialPort(options.device, {
-      baudRate: 115200
-    })
+    plugin.serialPorts = []
+    devices.forEach(device => {
+      let serial = new SerialPort(device.usbDevice, {
+        baudRate: 115200
+      })
+      plugin.serialPorts.push(serial)
 
-    plugin.serial.on(
-      'open',
-      function () {
-        const parser = new SerialPort.parsers.Readline()
-        plugin.serial.pipe(parser)
-        
-        parser.on('data', parseData);
-      }
-    )
-    
-    
-    plugin.serial.on('error', function (err) {
-      app.error(err.toString())
+      serial.on(
+        'open',
+        function () {
+          const parser = new SerialPort.parsers.Readline()
+          serial.pipe(parser)
+          
+          parser.on('data', data => {
+            parseData(device.key, data)
+          });
+          statusMessage = 'Connected, wating for data...'
+        }
+      )
+      
+      
+      serial.on('error', function (err) {
+        app.error(err.toString())
+        statusMessage = err.toString()
+      })
+      serial.on('close', function() {
+        app.debug("close")
+        statusMessage = 'Closed'
+      })
     })
-    plugin.serial.on('close', function() {
-      app.debug("close")
-    })
+  }
+
+  plugin.statusMessage = () => {
+    return statusMessage
   }
   
   plugin.stop = function() {
+    plugin.serialPorts.forEach(serial => {
+      serial.close()
+    })
   }
 
-  function parseData(data) {
+  function parseData(key, data) {
     app.debug('Data:', data);
     
     //Output: 0,0,0,0,nan,66.20,nan,24.00,5.00,F,0.02
@@ -110,7 +148,7 @@ module.exports = function(app) {
                
           delta.updates[0].values = paths.map(path => {
             return {
-              path: path,
+              path: keyPrefix + key + '.' + path,
               value: theValue
             }
           });
@@ -122,6 +160,7 @@ module.exports = function(app) {
       deltas.forEach(delta => {
         app.handleMessage(PLUGIN_ID, delta)
       })
+      statusMessage = 'Connected and receiving data'
     }
   }
 
@@ -136,13 +175,13 @@ module.exports = function(app) {
   const fridgeMappings = [
     [
       {
-        path: keyPrefix + 'compressorStatusNumber',
+        path: 'compressorStatusNumber',
         conversion: (val) => {
           return _.isUndefined(val) ? null : Number(val)
         }
       },
       {
-        path: keyPrefix + 'compressorStatus',
+        path: 'compressorStatus',
         conversion: (val) => {
           return {
             0: 'off',
@@ -153,41 +192,41 @@ module.exports = function(app) {
       },
     ],
     {
-      path: keyPrefix + 'defrostStatus',
+      path: 'defrostStatus',
       conversion: (val) => {
         return _.isUndefined(val) ? null : Number(val);
       }
     },
     {
-      path: keyPrefix + 'boxFan',
+      path: 'boxFan',
       conversion: (val) => {
         return _.isUndefined(val) ? null : Number(val);
       }
     },
     {
-      path: keyPrefix + 'compressorRoomFan',
+      path: 'compressorRoomFan',
       conversion: (val) => {
         return _.isUndefined(val) ? null : Number(val);
       }
     },
     {
-      path: keyPrefix + 'temperature',
+      path: 'temperature',
       conversion: convTemperature
     },
     {
-      path: keyPrefix + 'controllerTemperature',
+      path: 'controllerTemperature',
       conversion: convTemperature
     },
     {
-      path: keyPrefix + 'relativeHumidity',
+      path: 'relativeHumidity',
       conversion: (val) => { return Number(val) / 100 }
     },
     {
-      path: keyPrefix + 'controllerHumidity',
+      path: 'controllerHumidity',
       conversion: (val) => { return Number(val) / 100 }
     },
     {
-      path: keyPrefix + 'voltage',
+      path: 'voltage',
       conversion: (val) => { return Number(val) }
     },
     {
@@ -195,7 +234,7 @@ module.exports = function(app) {
       ignore: true
     },
     {
-      path: keyPrefix + 'current',
+      path: 'current',
       conversion: (val) => { return Number(val) }
     }
   ];
