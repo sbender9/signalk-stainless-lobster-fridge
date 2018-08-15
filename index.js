@@ -55,7 +55,19 @@ module.exports = function(app) {
       }
     }
   }
-  
+
+  const setProviderStatus = app.setProviderStatus
+        ? (msg) => {
+          app.setProviderStatus(msg)
+          statusMessage = msg
+        } : (msg) => { statusMessage = msg }
+
+  const setProviderError = app.setProviderError
+        ? (msg) => {
+          app.setProviderError(msg)
+          statusMessage = `error: ${msg}`
+        } : (msg, type) => { statusMessage = `error: ${msg}` }
+    
   plugin.start = function(options) {
     let devices
     if ( !options.devices && options.device ) {
@@ -80,18 +92,18 @@ module.exports = function(app) {
           parser.on('data', data => {
             parseData(device.key, data)
           });
-          statusMessage = 'Connected, wating for data...'
+          setProviderStatus('Connected, wating for data...')
         }
       )
       
       
       serial.on('error', function (err) {
         app.error(err.toString())
-        statusMessage = err.toString()
+        setProviderError(err.toString())
       })
       serial.on('close', function() {
         app.debug("close")
-        statusMessage = 'Closed'
+        setProviderError('Closed')
       })
     })
   }
@@ -160,7 +172,7 @@ module.exports = function(app) {
       deltas.forEach(delta => {
         app.handleMessage(PLUGIN_ID, delta)
       })
-      statusMessage = 'Connected and receiving data'
+      setProviderStatus('Connected and receiving data')
     }
   }
 
