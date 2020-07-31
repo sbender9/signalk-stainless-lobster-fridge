@@ -77,11 +77,18 @@ module.exports = function(app) {
     }
 
     plugin.serialPorts = []
-    devices.forEach(device => {
-      let serial = new SerialPort(device.usbDevice, {
+    devices.forEach((device, index) => {
+      plugin.connect(device.usbDevice, device.key, index)
+    })
+  }
+
+  plugin.connect = function(usbDevice, key, index) {
+    console.log(`connecting to ${usbDevice}:${key}:${index}`)
+    try {
+      let serial = new SerialPort(usbDevice, {
         baudRate: 115200
       })
-      plugin.serialPorts.push(serial)
+      plugin.serialPorts[index] = serial
 
       serial.on(
         'open',
@@ -90,7 +97,7 @@ module.exports = function(app) {
           serial.pipe(parser)
           
           parser.on('data', data => {
-            parseData(device.key, data)
+            parseData(key, data)
           });
           setProviderStatus('Connected, wating for data...')
         }
@@ -100,13 +107,30 @@ module.exports = function(app) {
       serial.on('error', function (err) {
         app.error(err.toString())
         setProviderError(err.toString())
+        scheduleReconnect(usbDevice, key, index)
       })
       serial.on('close', function() {
         app.debug("close")
         setProviderError('Closed')
+        scheduleReconnect(usbDevice, key, index)
       })
-    })
+    } catch ( err ) {
+      app.error(err)
+      setProviderError(err.message)
+      scheduleReconnect(usbDevice, key, index)
+    }
   }
+
+  function scheduleReconnect(usbDevice, key, index) {
+    const delay = 1000
+    const msg = `Not connected (retry delay ${(
+    delay / 1000
+  ).toFixed(0)} s)`
+    console.log(msg)
+    setProviderStatus(msg)
+    setTimeout(plugin.connect.bind(plugin, usbDevice, key, index), delay)
+  }
+
 
   plugin.statusMessage = () => {
     return statusMessage
