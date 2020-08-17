@@ -69,6 +69,7 @@ module.exports = function(app) {
         } : (msg, type) => { statusMessage = `error: ${msg}` }
     
   plugin.start = function(options) {
+    plugin.reconnectDelay = 1000
     let devices
     if ( !options.devices && options.device ) {
       devices = [ { key: 'inside.refrigerator', usbDevice: options.device } ]
@@ -95,6 +96,7 @@ module.exports = function(app) {
         function () {
           const parser = new SerialPort.parsers.Readline()
           serial.pipe(parser)
+          plugin.reconnectDelay = 1000
           
           parser.on('data', data => {
             parseData(key, data)
@@ -110,8 +112,7 @@ module.exports = function(app) {
         scheduleReconnect(usbDevice, key, index)
       })
       serial.on('close', function() {
-        app.debug("close")
-        setProviderError('Closed')
+        app.debug("closed")
         scheduleReconnect(usbDevice, key, index)
       })
     } catch ( err ) {
@@ -122,13 +123,13 @@ module.exports = function(app) {
   }
 
   function scheduleReconnect(usbDevice, key, index) {
-    const delay = 1000
+    plugin.reconnectDelay *= plugin.reconnectDelay < 60 * 1000 ? 1.5 : 1
     const msg = `Not connected (retry delay ${(
-    delay / 1000
+    plugin.reconnectDelay / 1000
   ).toFixed(0)} s)`
     console.log(msg)
-    setProviderStatus(msg)
-    setTimeout(plugin.connect.bind(plugin, usbDevice, key, index), delay)
+    setProviderError(msg)
+    setTimeout(plugin.connect.bind(plugin, usbDevice, key, index), plugin.reconnectDelay)
   }
 
 
@@ -137,9 +138,11 @@ module.exports = function(app) {
   }
   
   plugin.stop = function() {
-    plugin.serialPorts.forEach(serial => {
-      serial.close()
-    })
+    if ( plugin.serialPorts ) {
+      plugin.serialPorts.forEach(serial => {
+        serial.close()
+      })
+    }
   }
 
   function parseData(key, data) {
